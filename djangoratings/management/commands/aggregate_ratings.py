@@ -1,9 +1,6 @@
 from django.core.management.base import NoArgsCommand
 from django.db import transaction
 
-from ella.utils import installedapps
-installedapps.init_logger()
-
 # Logging must be inicialized
 from djangoratings.aggregation import transfer_data
 
