@@ -16,7 +16,6 @@ MINIMAL_ANONYMOUS_IP_DELAY = getattr(settings, 'MINIMAL_ANONYMOUS_IP_DELAY', 180
 RATINGS_COOKIE_NAME = getattr(settings, 'RATINGS_COOKIE_NAME', 'ratings_voted')
 RATINGS_MAX_COOKIE_LENGTH = getattr(settings, 'RATINGS_MAX_COOKIE_LENGTH', 20)
 RATINGS_MAX_COOKIE_AGE = getattr(settings, 'RATINGS_MAX_COOKIE_AGE', 3600)
-RATINGS_COEFICIENT = getattr(settings, 'RATINGS_COEFICIENT', Decimal("1.1"))
 
 PERIOD_CHOICES = (
     ('d', 'day'),
@@ -100,7 +99,7 @@ class TotalRateManager(models.Manager):
         """
         rate = Rating.objects.get_for_object(obj)
         aggr = TotalRate.objects.get_for_object(obj)
-        sum = Decimal(str(rate)) + aggr
+        sum = rate + aggr
         return sum.quantize(Decimal(".0"))
 
     def get_normalized_rating(self, obj, max, step=None):
@@ -157,15 +156,10 @@ class TotalRateManager(models.Manager):
                 obj: object to work with
         """
         content_type = ContentType.objects.get_for_model(obj)
-        sql = '''SELECT SUM(amount)
-                 FROM %s
-                 WHERE target_id = %%s AND target_ct_id = %%s''' % (
-            connection.ops.quote_name(TotalRate._meta.db_table),
-        )
-        cursor = connection.cursor()
-        cursor.execute(sql, (obj.id, content_type.id))
-        result = cursor.fetchone()
-        return result[0] or Decimal("0")
+        try:
+            return self.values('amount').get(target_ct=content_type, target_id=obj.pk)['amount']
+        except self.model.DoesNotExist:
+            return 0
 
 
     def get_top_objects(self, count, mods=[]):
@@ -193,7 +187,7 @@ class TotalRateManager(models.Manager):
                     FROM
                         %(total_tab)s as total LEFT OUTER JOIN
                         (
-                         SELECT target_ct_id, target_id, SUM(amount * %(coef)s) as sum FROM %(rate_tab)s GROUP BY target_ct_id, target_id
+                         SELECT target_ct_id, target_id, SUM(amount) as sum FROM %(rate_tab)s GROUP BY target_ct_id, target_id
                         ) as new ON total.target_ct_id = new.target_ct_id and total.target_id = new.target_id
                     %(cond_agg)s
                     )
@@ -204,7 +198,7 @@ class TotalRateManager(models.Manager):
                     FROM
                         %(total_tab)s as total RIGHT OUTER JOIN
                         (
-                         SELECT target_ct_id, target_id, SUM(amount * %(coef)s) as sum FROM %(rate_tab)s GROUP BY target_ct_id, target_id
+                         SELECT target_ct_id, target_id, SUM(amount) as sum FROM %(rate_tab)s GROUP BY target_ct_id, target_id
                         ) as new ON total.target_ct_id = new.target_ct_id and total.target_id = new.target_id
                     %(cond_rate)s
                     )
@@ -217,7 +211,6 @@ class TotalRateManager(models.Manager):
                 'total_tab' : connection.ops.quote_name(TotalRate._meta.db_table),
                 'cond_agg' : where_agg,
                 'cond_rate' : where_rate,
-                'coef' : RATINGS_COEFICIENT,
                 'ct_tab' : connection.ops.quote_name(ContentType._meta.db_table),
                 'rate_tab' : connection.ops.quote_name(Rating._meta.db_table),
             }
@@ -231,7 +224,7 @@ class TotalRate(models.Model):
     save all rating for individual object.
     """
     target_ct = models.ForeignKey(ContentType, db_index=True)
-    target_id = models.PositiveIntegerField(_('Object ID'), db_index=True)
+    target_id = models.PositiveIntegerField(_('Object ID'))
     target = generic.GenericForeignKey('target_ct', 'target_id')
     amount = models.DecimalField(_('Amount'), max_digits=10, decimal_places=2)
 
@@ -243,6 +236,7 @@ class TotalRate(models.Model):
     class Meta:
         verbose_name = _('Total rate')
         verbose_name_plural = _('Total rates')
+        unique_together = (('target_ct', 'target_id',),)
 
 
 
@@ -333,16 +327,10 @@ class RatingManager(models.Manager):
             obj: object to work with
         """
         content_type = ContentType.objects.get_for_model(obj)
-        sql = 'SELECT SUM(amount * %s) FROM %s WHERE target_id = %s AND target_ct_id = %s' % (
-            RATINGS_COEFICIENT,
-            connection.ops.quote_name(Rating._meta.db_table),
-            obj.id,
-            content_type.id,
-        )
-        cursor = connection.cursor()
-        cursor.execute(sql, ())
-        result = cursor.fetchone()
-        return result[0] or Decimal("0")
+        aggs = self.filter(target_ct=content_type, target_id=obj.pk).aggregate(amount_sum=models.Sum('amount'))['amount_sum']
+        if aggs is None:
+            return 0
+        return aggs
 
     def copy_rate_to_agg(self, time_limit, time_format, time_period):
         """
