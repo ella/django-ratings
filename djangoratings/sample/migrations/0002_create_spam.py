@@ -1,11 +1,11 @@
 
 from south.db import db
 from django.db import models
-from djangobaselibrary.sample.models import *
+from djangoratings.sample.models import *
 
 '''
 created via:
-./djangobaseproject/manage.py startmigration sample create_spam --model Spam
+./djangoratings_proj/manage.py startmigration sample create_spam --model Spam
 '''
 
 class Migration:

@@ -1,11 +1,11 @@
 
 from south.db import db
 from django.db import models
-from djangobaselibrary.sample.models import *
+from djangoratings.sample.models import *
 
 '''
 created via:
-./djangobaseproject/manage.py startmigration djangobaselibrary.sample initial
+./djangoratings_proj/manage.py startmigration djangoratings.sample initial
 '''
 
 class Migration:
