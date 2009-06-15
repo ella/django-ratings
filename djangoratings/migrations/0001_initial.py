@@ -1,7 +1,7 @@
 
 from south.db import db
 from django.db import models
-from ella.ratings.models import *
+from djangoratings.models import *
 
 class Migration:
     

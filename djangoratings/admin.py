@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from ella.ratings.models import Rating, TotalRate, ModelWeight
+from djangoratings.models import Rating, TotalRate, ModelWeight
 
 class RatingOptions(admin.ModelAdmin):
     list_filter = ('time', 'target_ct',)

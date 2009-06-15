@@ -60,7 +60,7 @@ class ModelWeightManager(models.Manager):
         """
         Clear out the model-weight cache. This needs to happen during database
         flushes to prevent caching of "stale" model weights IDs (see
-        ella.ratings.management.create_model_weights and ModelWeight.save() for where
+        djangoratings.management.create_model_weights and ModelWeight.save() for where
         this gets called).
 
         Taken from django.contrib.contenttypes.models, thanks.
@@ -92,7 +92,7 @@ class ModelWeight(models.Model):
         ordering = ('-weight',)
 
 def normalized_rating_key(func, self, obj, max, step=None):
-    return 'ella.ratings.models.normalized_rating:%s.%s:%s:%s:%s' % (
+    return 'djangoratings.models.normalized_rating:%s.%s:%s:%s:%s' % (
             obj._meta.app_label, obj._meta.object_name, obj.pk, max, step)
 class TotalRateManager(models.Manager):
 

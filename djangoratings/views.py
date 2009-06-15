@@ -4,7 +4,7 @@ from django.contrib.sites.models import Site
 from django.utils import simplejson
 from django.db import models
 
-from ella.ratings.models import *
+from djangoratings.models import *
 
 current_site = Site.objects.get_current()
 
@@ -125,7 +125,7 @@ def rate(request, bits, context):
 #
 #    Form data:
 #        POST:
-#            ella.ratings.forms.RateForm
+#            djangoratings.forms.RateForm
 #            next: url to redirect to after successful attempt
 #
 #    Raises:

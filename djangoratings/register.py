@@ -1,2 +1,2 @@
 # register custom urls
-from ella.ratings import urls
+from djangoratings import urls
