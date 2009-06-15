@@ -1,20 +1,25 @@
 
 from south.db import db
 from django.db import models
-from djangobaselibrary.sample.models import *
+from djangoratings.sample.models import *
+
+'''
+created via:
+./djangoratings_proj/manage.py startmigration sample freeze --freeze sample
+'''
 
 class Migration:
+    
     def forwards(self, orm):
-        # adding unique together meta
-        db.create_index('sample_spam', ['name', 'expires'], unique=True)
-
+        "Write your forwards migration here"
+    
+    
     def backwards(self, orm):
-        # removing unique together meta
-        db.delete_index('sample_spam', ['name', 'expires'])
-
+        "Write your backwards migration here"
+    
+    
     models = {
         'sample.spam': {
-            'Meta': {'unique_together': "(('name','expires'),)"},
             'count': ('models.IntegerField', [], {}),
             'expires': ('models.DateTimeField', [], {}),
             'id': ('models.AutoField', [], {'primary_key': 'True'}),
@@ -22,6 +27,5 @@ class Migration:
             'weight': ('models.FloatField', [], {})
         }
     }
-
+    
     complete_apps = ['sample']
-
