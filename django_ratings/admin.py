@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from djangoratings.models import Rating, TotalRate, ModelWeight
+from django_ratings.models import Rating, TotalRate, ModelWeight
 
 class RatingOptions(admin.ModelAdmin):
     list_filter = ('time', 'target_ct',)

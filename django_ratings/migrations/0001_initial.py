@@ -1,7 +1,7 @@
 
 from south.db import db
 from django.db import models
-from djangoratings.models import *
+from django_ratings.models import *
 
 class Migration:
     

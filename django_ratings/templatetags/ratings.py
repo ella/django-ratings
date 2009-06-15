@@ -6,9 +6,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import slugify
 
-from djangoratings.models import TotalRate
-from djangoratings.forms import RateForm
-from djangoratings.views import get_was_rated
+from django_ratings.models import TotalRate
+from django_ratings.forms import RateForm
+from django_ratings.views import get_was_rated
 from django.utils.translation import ugettext as _
 
 from recepty import settings

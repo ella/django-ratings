@@ -5,9 +5,9 @@ This file is for aggregation records from Rating,Agg tables to Agg and TotalRate
 import logging
 
 from datetime import datetime, timedelta
-from djangoratings.models import Rating, Agg, TotalRate
+from django_ratings.models import Rating, Agg, TotalRate
 
-logger = logging.getLogger('djangoratings')
+logger = logging.getLogger('django_ratings')
 
 DELTA_TIME_YEAR = 365*24*60*60
 DELTA_TIME_MONTH = 30*24*60*60

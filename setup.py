@@ -1,12 +1,12 @@
 from setuptools import setup, find_packages
-import djangoratings
+import django_ratings
 
 VERSION = (0, 0, 0)
 __version__ = VERSION
 __versionstr__ = '.'.join(map(str, VERSION))
 
 setup(
-    name = 'djangoratings',
+    name = 'django_ratings',
     version = __versionstr__,
     description = 'Django Ratings',
     long_description = '\n'.join((

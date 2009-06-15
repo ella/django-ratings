@@ -2,7 +2,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db.models.fields import FieldDoesNotExist
 from django.contrib.auth.models import SiteProfileNotAvailable
 
-from djangoratings.models import *
+from django_ratings.models import *
 
 try:
     profile_model = models.get_model(*settings.AUTH_PROFILE_MODULE.split('.'))

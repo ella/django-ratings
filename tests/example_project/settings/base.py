@@ -4,7 +4,7 @@ from os.path import dirname, join
 
 import django
 
-import djangoratings
+import django_ratings
 
 import example_project
 

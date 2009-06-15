@@ -2,7 +2,7 @@ from django.core.management.base import NoArgsCommand
 from django.db import transaction
 
 # Logging must be inicialized
-from djangoratings.aggregation import transfer_data
+from django_ratings.aggregation import transfer_data
 
 class Command(NoArgsCommand):
     help = 'Aggregate ratings'

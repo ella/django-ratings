@@ -2,7 +2,7 @@ from djangosanetesting.cases import DatabaseTestCase
 
 from django.contrib.contenttypes.models import ContentType
 
-from djangoratings.models import TotalRate, Rating
+from django_ratings.models import TotalRate, Rating
 
 class TestTotalRate(DatabaseTestCase):
     def setUp(self):
@@ -19,6 +19,7 @@ class TestTotalRate(DatabaseTestCase):
                 amount=10
             )
         self.assert_equals(10, TotalRate.objects.get_total_rating(self.obj))
+
         
 class TestRating(DatabaseTestCase):
     def setUp(self):
@@ -34,6 +35,5 @@ class TestRating(DatabaseTestCase):
                 target_id=self.obj.pk,
                 amount=10
             )
-
         self.assert_equals(10, Rating.objects.get_for_object(self.obj))
         
