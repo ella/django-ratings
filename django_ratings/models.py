@@ -90,18 +90,6 @@ class ModelWeight(models.Model):
 
 class TotalRateManager(models.Manager):
 
-    def get_total_rating(self, obj):
-        """
-        Return total amount from TotalRate and Rating tables.
-
-        Params:
-                obj: object to work with
-        """
-        rate = Rating.objects.get_for_object(obj)
-        aggr = TotalRate.objects.get_for_object(obj)
-        sum = rate + aggr
-        return sum.quantize(Decimal(".0"))
-
     def get_normalized_rating(self, obj, max, step=None):
         """
         Returns rating normalized from min to max rounded to step
@@ -170,54 +158,11 @@ class TotalRateManager(models.Manager):
             count: number of objects to return
             mods: if specified, limit the result to given model classes
         """
-        where_rate = ''
-        where_agg = ''
+        qset = self.order_by('-amount')
+        kw = {}
         if mods:
-            where_agg = ' WHERE total.target_ct_id IN (%s) ' % ', '.join('%s' % ContentType.objects.get_for_model(m).id for m in mods)
-            where_rate = ' WHERE new.target_ct_id IN (%s) ' % ', '.join('%s' % ContentType.objects.get_for_model(m).id for m in mods)
-
-        sql = '''
-            SELECT DISTINCT
-                ct.app_label, ct.model, tr.target_id, tr.amount
-            FROM
-                (
-                    (
-                    SELECT
-                        total.target_ct_id, total.target_id, total.amount + COALESCE(new.sum,0) as amount
-                    FROM
-                        %(total_tab)s as total LEFT OUTER JOIN
-                        (
-                         SELECT target_ct_id, target_id, SUM(amount) as sum FROM %(rate_tab)s GROUP BY target_ct_id, target_id
-                        ) as new ON total.target_ct_id = new.target_ct_id and total.target_id = new.target_id
-                    %(cond_agg)s
-                    )
-                    UNION
-                    (
-                    SELECT
-                        new.target_ct_id, new.target_id, COALESCE(total.amount,0) + new.sum as amount
-                    FROM
-                        %(total_tab)s as total RIGHT OUTER JOIN
-                        (
-                         SELECT target_ct_id, target_id, SUM(amount) as sum FROM %(rate_tab)s GROUP BY target_ct_id, target_id
-                        ) as new ON total.target_ct_id = new.target_ct_id and total.target_id = new.target_id
-                    %(cond_rate)s
-                    )
-
-                ) tr JOIN %(ct_tab)s ct on ct.id = tr.target_ct_id
-            ORDER BY
-                tr.amount DESC,
-                tr.target_id
-            LIMIT %%s''' % {
-                'total_tab' : connection.ops.quote_name(TotalRate._meta.db_table),
-                'cond_agg' : where_agg,
-                'cond_rate' : where_rate,
-                'ct_tab' : connection.ops.quote_name(ContentType._meta.db_table),
-                'rate_tab' : connection.ops.quote_name(Rating._meta.db_table),
-            }
-        cursor = connection.cursor()
-        cursor.execute(sql, (count,))
-
-        return [ (models.get_model(*row[:2])._default_manager.get(pk=row[2]), row[3].quantize(Decimal(".0"))) for row in cursor.fetchall() ]
+            kw['target_ct__in'] = [ContentType.objects.get_for_model(m).pk for m in mods]
+        return [o.target for o in qset.filter(**kw)[:count]]
 
 class TotalRate(models.Model):
     """
@@ -346,15 +291,15 @@ class RatingManager(models.Manager):
         sql = '''INSERT INTO %(tb)s (detract, period, people, amount, time, target_ct_id, target_id)
                  SELECT 0,%(pe)s, COUNT(*), SUM(amount), DATE(time), target_ct_id, target_id
                  FROM %(tab)s
-                 WHERE time <= %%(li)s
-                 GROUP BY target_ct_id, target_id, DATE_FORMAT(time, %%(format)s)''' % {
+                 WHERE time <= %%s
+                 GROUP BY target_ct_id, target_id, DATE_FORMAT(time, %%s)''' % {
             'tab' : connection.ops.quote_name(Rating._meta.db_table),
             'tb' : connection.ops.quote_name(Agg._meta.db_table),
             'pe' : time_period,
         }
 
         cursor = connection.cursor()
-        cursor.execute(sql, {'li' : time_limit,'format' : time_format})
+        cursor.execute(sql, (time_limit, time_format))
 
 
 class Rating(models.Model):
@@ -380,7 +325,7 @@ class Rating(models.Model):
         verbose_name_plural = _('Ratings')
         ordering = ('-time',)
 
-    def save(self, force_insert=False, force_update=False):
+    def save(self, **kwargs):
         """
         Modified save() method that checks for duplicit entries.
         """
@@ -401,6 +346,11 @@ class Rating(models.Model):
                     ).count() > 0):
                 return
 
-        super(Rating, self).save(force_insert, force_update)
+        super(Rating, self).save(**kwargs)
+
+        # denormalize the total rate
+        cnt = TotalRate.objects.filter(target_ct=self.target_ct, target_id=self.target_id).update(amount=models.F('amount')+self.amount)
+        if cnt == 0:
+            tr = TotalRate.objects.create(target_ct=self.target_ct, target_id=self.target_id, amount=self.amount)
 
 
