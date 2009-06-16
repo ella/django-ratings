@@ -327,7 +327,6 @@ class Rating(models.Model):
     class Meta:
         verbose_name = _('Rating')
         verbose_name_plural = _('Ratings')
-        ordering = ('-time',)
 
     def save(self, **kwargs):
         """
