@@ -333,7 +333,7 @@ class Rating(models.Model):
         """
         Modified save() method that checks for duplicit entries.
         """
-        if not self.id:
+        if not self.pk:
             # fail silently on inserting duplicate ratings
             if self.user:
                 try:
@@ -349,12 +349,12 @@ class Rating(models.Model):
                         time__gte=(self.time or datetime.now()) - timedelta(seconds=MINIMAL_ANONYMOUS_IP_DELAY)
                     ).count() > 0):
                 return
+            # denormalize the total rate
+            cnt = TotalRate.objects.filter(target_ct=self.target_ct, target_id=self.target_id).update(amount=models.F('amount')+self.amount)
+            if cnt == 0:
+                tr = TotalRate.objects.create(target_ct=self.target_ct, target_id=self.target_id, amount=self.amount)
+
 
         super(Rating, self).save(**kwargs)
-
-        # denormalize the total rate
-        cnt = TotalRate.objects.filter(target_ct=self.target_ct, target_id=self.target_id).update(amount=models.F('amount')+self.amount)
-        if cnt == 0:
-            tr = TotalRate.objects.create(target_ct=self.target_ct, target_id=self.target_id, amount=self.amount)
 
 

@@ -22,6 +22,16 @@ class TestTotalRate(DatabaseTestCase):
             )
         self.assert_equals(10, TotalRate.objects.get_for_object(self.obj))
 
+    def test_rating_doesnt_propagate_to_total_rate_on_update(self):
+        r = Rating.objects.create(
+                target_ct=ContentType.objects.get_for_model(self.obj),
+                target_id=self.obj.pk,
+                amount=10
+            )
+        r.amount = 100
+        r.save()
+        self.assert_equals(10, TotalRate.objects.get_for_object(self.obj))
+
         
     def test_rating_propagates_to_total_rate_even_for_existing_totalrate(self):
         TotalRate.objects.create(
@@ -110,6 +120,6 @@ class TestAggregation(DatabaseTestCase):
                 (yesterday.date(),  2,  12   ),
                 (now.date(),        2,  3    ),
             ]
-        self.assert_equals(expected, [ (a.time, a.people, a.amount) for a in Agg.objects.order_by('time')])
+        self.assert_equals(expected, [(a.time, a.people, a.amount) for a in Agg.objects.order_by('time')])
 
 
