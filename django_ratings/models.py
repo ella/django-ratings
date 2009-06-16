@@ -214,11 +214,7 @@ class AggManager(models.Manager):
         """
         update objects field detract for futhure possibility aggregation
         """
-        sql = 'UPDATE %s SET detract = 0' % (
-            connection.ops.quote_name(Agg._meta.db_table),
-        )
-        cursor = connection.cursor()
-        cursor.execute(sql, ())
+        self.all().update(detract=0)
 
     def agg_to_totalrate(self):
         """
