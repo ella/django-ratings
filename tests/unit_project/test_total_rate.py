@@ -45,7 +45,7 @@ class TestTopObjects(DatabaseTestCase):
                 Rating.objects.create(
                         target_ct=meta_ct,
                         target_id=ct.pk,
-                        amount=ct.pk
+                        amount=ct.pk*10
                     )
                 )
 
@@ -54,6 +54,17 @@ class TestTopObjects(DatabaseTestCase):
 
     def test_return_top_rated_objects(self):
         self.assert_equals(list(ContentType.objects.order_by('-pk')[:3]), TotalRate.objects.get_top_objects(3))
+
+    def test_return_only_given_model_type(self):
+        Rating.objects.create(
+                target_ct=ContentType.objects.get_for_model(Rating),
+                target_id=self.ratings[0].pk,
+                amount=1
+            )
+        self.assert_equals(self.ratings[:1], TotalRate.objects.get_top_objects(10, mods=[Rating]))
+
+    def test_return_only_given_model_type_even_if_no_ratings(self):
+        self.assert_equals(0, len(TotalRate.objects.get_top_objects(10, mods=[TotalRate])))
 
         
 class TestRating(DatabaseTestCase):
