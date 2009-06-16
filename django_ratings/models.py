@@ -277,7 +277,7 @@ class RatingManager(models.Manager):
             return 0
         return aggs
 
-    def copy_rate_to_agg(self, time_limit, time_format, time_period):
+    def move_rate_to_agg(self, time_limit, time_format, time_period):
         """
         Coppy aggregated Rating to table Agg
 
@@ -304,6 +304,7 @@ class RatingManager(models.Manager):
 
         cursor = connection.cursor()
         cursor.execute(sql, (time_period, time_limit,))
+        self.filter(time__lte=time_limit).delete()
 
 
 class Rating(models.Model):

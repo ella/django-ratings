@@ -99,22 +99,24 @@ class TestAggregation(DatabaseTestCase):
     def setUp(self):
         super(TestAggregation, self).setUp()
         self.obj = ContentType.objects.get_for_model(ContentType)
-
-    def test_aggregation_from_ratings_works_for_days(self):
-        kw = {
+        self.kw = {
                 'target_ct': ContentType.objects.get_for_model(self.obj),
                 'target_id': self.obj.pk
             }
+
+
+    def test_aggregation_from_ratings_works_for_days(self):
         now = datetime.now()
-        Rating.objects.create(amount=1, time=now, **kw)
-        Rating.objects.create(amount=2, time=now, **kw)
+        Rating.objects.create(amount=1, time=now, **self.kw)
+        Rating.objects.create(amount=2, time=now, **self.kw)
 
         yesterday = now - timedelta(days=1)
-        Rating.objects.create(amount=4, time=yesterday, **kw)
-        Rating.objects.create(amount=8, time=yesterday, **kw)
+        Rating.objects.create(amount=4, time=yesterday, **self.kw)
+        Rating.objects.create(amount=8, time=yesterday, **self.kw)
 
-        Rating.objects.copy_rate_to_agg(now, 'day', 'd')
+        Rating.objects.move_rate_to_agg(now, 'day', 'd')
 
+        self.assert_equals(0, Rating.objects.count())
         self.assert_equals(2, Agg.objects.count())
         expected = [
                 (yesterday.date(),  2,  12   ),
