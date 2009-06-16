@@ -74,57 +74,9 @@ def create_all_model_weights(verbosity=2):
         create_model_weights(app, None, verbosity)
 
 
-##
-# install our function
-#   TODO: parametrize the individual rows
-#       - let the user supply breaking points (50, 100, 200), tangents (-1, -1/2, -1/4), shift(100) and end value (10)
-##
-TIME_COEFICIENT = \
-r'''((((sign(days + 1) + 1) / 2) *  ((sign(50 - days) + 1) / 2)) * (-days + 100) +
-    (((sign(days - 50) + 1) / 2) *  ((sign(100 - days) + 1) / 2)) * (-days/2.0 - 25 + 100) +
-    (((sign(days - 100) + 1) / 2) *  ((sign(200 - days) + 1) / 2)) * (-days/4.0 - 50 + 100) +
-    10)/100
-'''
-
-KARMA_GET_TIME_COEFICIENT_MYSQL = r'''CREATE FUNCTION karma_get_time_coeficient(days INTEGER) RETURNS DECIMAL(10,2) NO SQL
-RETURN %s;
-''' % TIME_COEFICIENT
-
-FUNCTION_EXISTS_MYSQL = 'SELECT COUNT(*) FROM mysql.proc WHERE name = %s;'
-
-
-if settings.DATABASE_ENGINE == 'mysql':
-    KARMA_GET_TIME_COEFICIENT = KARMA_GET_TIME_COEFICIENT_MYSQL
-    FUNCTION_EXISTS = FUNCTION_EXISTS_MYSQL
-else:
-    print "Warning - some karma-related functions may not work properly under your DB, consider using MySQL 5."
-
-
-def install_sql_functions(app, created_models, verbosity=2):
-    """
-    Install the SQL functions we will use.
-
-    Params:
-        All ignored
-    """
-
-    cursor = connection.cursor()
-    cursor.execute(FUNCTION_EXISTS, ('karma_get_time_coeficient',))
-    row = cursor.fetchone()
-    if row[0] == 0:
-        if verbosity >= 2:
-            print "Installing karma_get_time_coeficient function."
-        # create the function - this is run after every app's syncdb, but we don't care
-        cursor.execute(KARMA_GET_TIME_COEFICIENT)
-
-# bind the functions to run after syncdb
-
-#if settings.DATABASE_ENGINE == 'mysql':
-#    dispatcher.connect(install_sql_functions, signal=signals.post_syncdb)
 #dispatcher.connect(create_model_weights, signal=signals.post_syncdb)
 
 
 if __name__ == "__main__":
     create_all_model_weights()
-    install_sql_functions(None, None, None)
 
