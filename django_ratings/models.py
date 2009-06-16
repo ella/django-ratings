@@ -287,19 +287,23 @@ class RatingManager(models.Manager):
 
         time_period: is a period of aggregation data
         """
+        qn = connection.ops.quote_name
+        date_trunc = connection.ops.date_trunc_sql
 
-        sql = '''INSERT INTO %(tb)s (detract, period, people, amount, time, target_ct_id, target_id)
-                 SELECT 0,%(pe)s, COUNT(*), SUM(amount), DATE(time), target_ct_id, target_id
-                 FROM %(tab)s
+        sql = '''INSERT INTO %(agg_table)s
+                    (detract, period, people, amount, time, target_ct_id, target_id)
+                 SELECT
+                    0, %%s, COUNT(*), SUM(amount), %(truncated_date)s, target_ct_id, target_id
+                 FROM %(rating_table)s
                  WHERE time <= %%s
-                 GROUP BY target_ct_id, target_id, DATE_FORMAT(time, %%s)''' % {
-            'tab' : connection.ops.quote_name(Rating._meta.db_table),
-            'tb' : connection.ops.quote_name(Agg._meta.db_table),
-            'pe' : time_period,
+                 GROUP BY target_ct_id, target_id, %(truncated_date)s''' % {
+            'rating_table' : qn(Rating._meta.db_table),
+            'agg_table' : qn(Agg._meta.db_table),
+            'truncated_date': date_trunc(time_format, qn('time')),
         }
 
         cursor = connection.cursor()
-        cursor.execute(sql, (time_limit, time_format))
+        cursor.execute(sql, (time_period, time_limit,))
 
 
 class Rating(models.Model):

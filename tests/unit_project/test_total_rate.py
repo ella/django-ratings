@@ -1,8 +1,9 @@
+from datetime import datetime, timedelta, date
 from djangosanetesting.cases import DatabaseTestCase
 
 from django.contrib.contenttypes.models import ContentType
 
-from django_ratings.models import TotalRate, Rating
+from django_ratings.models import TotalRate, Rating, Agg
 from django_ratings import aggregation
 
 class TestTotalRate(DatabaseTestCase):
@@ -83,3 +84,32 @@ class TestRating(DatabaseTestCase):
             )
         self.assert_equals(10, Rating.objects.get_for_object(self.obj))
         
+
+class TestAggregation(DatabaseTestCase):
+    def setUp(self):
+        super(TestAggregation, self).setUp()
+        self.obj = ContentType.objects.get_for_model(ContentType)
+
+    def test_aggregation_from_ratings_works_for_days(self):
+        kw = {
+                'target_ct': ContentType.objects.get_for_model(self.obj),
+                'target_id': self.obj.pk
+            }
+        now = datetime.now()
+        Rating.objects.create(amount=1, time=now, **kw)
+        Rating.objects.create(amount=2, time=now, **kw)
+
+        yesterday = now - timedelta(days=1)
+        Rating.objects.create(amount=4, time=yesterday, **kw)
+        Rating.objects.create(amount=8, time=yesterday, **kw)
+
+        Rating.objects.copy_rate_to_agg(now, 'day', 'd')
+
+        self.assert_equals(2, Agg.objects.count())
+        expected = [
+                (yesterday.date(),  2,  12   ),
+                (now.date(),        2,  3    ),
+            ]
+        self.assert_equals(expected, [ (a.time, a.people, a.amount) for a in Agg.objects.order_by('time')])
+
+
