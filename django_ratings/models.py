@@ -187,7 +187,7 @@ class TotalRate(models.Model):
 
 class AggManager(models.Manager):
 
-    def copy_agg_to_agg(self, time_limit, time_format, time_period):
+    def move_agg_to_agg(self, time_limit, time_format, time_period):
         """
         Coppy aggregated Agg data to table Agg
 
@@ -197,18 +197,23 @@ class AggManager(models.Manager):
 
         time_period: is a period of aggregation data
         """
+        qn = connection.ops.quote_name
+        date_trunc = connection.ops.date_trunc_sql
 
-        sql = '''INSERT INTO %(tab)s (detract, period, people, amount, time, target_ct_id, target_id)
-                 SELECT 1, %(pe)s, SUM(people), SUM(amount), DATE(time), target_ct_id, target_id
-                 FROM %(tab)s
-                 WHERE time <= %%(li)s and detract = 0
-                 GROUP BY target_ct_id, target_id, DATE_FORMAT(time, %%(format)s)''' % {
-            'tab' : connection.ops.quote_name(Agg._meta.db_table),
-            'pe' : time_period
+        sql = '''INSERT INTO %(agg_table)s
+                    (detract, period, people, amount, time, target_ct_id, target_id)
+                 SELECT
+                    1, %%s, SUM(people), SUM(amount), %(truncated_date)s, target_ct_id, target_id
+                 FROM %(agg_table)s
+                 WHERE time <= %%s AND detract = 0
+                 GROUP BY target_ct_id, target_id, %(truncated_date)s''' % {
+            'agg_table' : qn(Agg._meta.db_table),
+            'truncated_date': date_trunc(time_format, qn('time')),
         }
 
         cursor = connection.cursor()
-        cursor.execute(sql, {'li' : time_limit,'format' : time_format})
+        cursor.execute(sql, (time_period, time_limit,))
+        self.filter(time__lte=time_limit, detract=0).delete()
 
     def agg_assume(self):
         """
