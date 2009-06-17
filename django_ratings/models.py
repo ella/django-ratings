@@ -225,13 +225,15 @@ class AggManager(models.Manager):
         """
         Transfer aggregation data from table Agg to table TotalRate
         """
+        qn = connection.ops.quote_name
+
 
         sql = '''INSERT INTO %(tab_tr)s (amount, target_ct_id, target_id)
                  SELECT SUM(amount), target_ct_id, target_id
                  FROM %(tab_agg)s
                  GROUP BY target_ct_id, target_id''' % {
-            'tab_agg' : connection.ops.quote_name(Agg._meta.db_table),
-            'tab_tr' : connection.ops.quote_name(TotalRate._meta.db_table)
+            'tab_agg' : qn(Agg._meta.db_table),
+            'tab_tr' : qn(TotalRate._meta.db_table)
         }
 
         cursor = connection.cursor()
