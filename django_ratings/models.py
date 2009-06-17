@@ -90,50 +90,44 @@ class ModelWeight(models.Model):
 
 class TotalRateManager(models.Manager):
 
-    def get_normalized_rating(self, obj, max, step=None):
+    def get_normalized_rating(self, obj, top, step=None):
         """
-        Returns rating normalized from min to max rounded to step
+        Returns rating normalized from min to top rounded to step
 
         - no score (0) is always avarage (0)
         - worst score gets always min
-        - best score gets always max
-        - results between 0 and min/max should be uniformly distributed
+        - best score gets always top
+        - results between 0 and top should be uniformly distributed
         """
-        total = self.get_total_rating(obj)
+        total = self.get_for_object(obj)
         if total == 0:
-            return Decimal("0").quantize(step or Decimal("1"))
+            return Decimal("0").quantize(step or 1)
 
         # Handle positive and negative score separately
-        lt = "<"
-        gt = ">"
-        ref = max
+        op_lt = "lt"
+        op_gt = "gt"
+        ref = top
         if total < 0:
-            lt = ">"
-            gt = "<"
-            ref = -max
+            op_lt = "gt"
+            op_gt = "lt"
+            ref = -top
 
-        ct_id = ContentType.objects.get_for_model(obj).id
-        sql = "SELECT (SELECT count(*) FROM %(table)s WHERE target_ct_id=%%s AND amount %(lt)s= %%s AND amount %(gt)s 0) / (SELECT count(*) FROM %(table)s WHERE target_ct_id=%%s AND amount %(gt)s 0)" \
-            % {'table': connection.ops.quote_name(TotalRate._meta.db_table),
-               'gt' :gt, 'lt' : lt,}
+        ct = ContentType.objects.get_for_model(obj)
+        more = self.filter(target_ct=ct, **{'amount__' + op_lt: total, 'amount__' + op_gt: 0 }).count()
+        total = self.filter(target_ct=ct, **{'amount__' + op_gt: 0 }).count()
 
-        cursor = connection.cursor()
-        cursor.execute(sql, (ct_id, total, ct_id))
-        (percentil,) = cursor.fetchone()
-
-        if percentil is None:
+        if total == 0:
             # First rating
             percentil = Decimal(0)
-        cursor.close()
+        else:
+            percentil = Decimal(more) / Decimal(total)
 
         result = percentil * ref
         if step:
-            result = (result / step).quantize(Decimal("1")) * step
-        if result < -max:
-            result = -max
-        if result > max:
-            result = max
-        return result
+            result = (result / step).quantize(1) * step
+        result = max(-top, result)
+        result = min(top, result)
+        return result.quantize(1)
 
 
     def get_for_object(self, obj):

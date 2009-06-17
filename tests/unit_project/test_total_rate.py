@@ -51,7 +51,8 @@ class MultipleRatedObjectsTestCase(DatabaseTestCase):
         super(MultipleRatedObjectsTestCase, self).setUp()
         self.ratings = []
         meta_ct = ContentType.objects.get_for_model(ContentType)
-        for ct in ContentType.objects.all():
+        self.objs = list(ContentType.objects.order_by('pk'))
+        for ct in self.objs:
             self.ratings.append(
                 Rating.objects.create(
                         target_ct=meta_ct,
@@ -59,6 +60,21 @@ class MultipleRatedObjectsTestCase(DatabaseTestCase):
                         amount=ct.pk*10
                     )
                 )
+
+class TestNormalizedRating(MultipleRatedObjectsTestCase):
+    def test_distribution_in_smaller_universum(self):
+        objs = []
+        top = len(self.objs)
+        for ct in self.objs:
+            objs.append((TotalRate.objects.get_for_object(ct), TotalRate.objects.get_normalized_rating(ct, top)))
+        self.assert_equals([(ct.pk*10, (ct.pk-1)) for ct in self.objs], objs)
+
+    def test_distribution_in_same_sized_universum(self):
+        objs = []
+        top = len(self.objs) * 10
+        for ct in self.objs:
+            objs.append((TotalRate.objects.get_for_object(ct), TotalRate.objects.get_normalized_rating(ct, top)))
+        self.assert_equals([(ct.pk*10, (ct.pk-1)*10) for ct in self.objs], objs)
 
 class TestTopObjects(MultipleRatedObjectsTestCase):
     def test_only_return_count_objects(self):
