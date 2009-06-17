@@ -104,6 +104,13 @@ class TestAggregation(DatabaseTestCase):
                 'target_id': self.obj.pk
         }
 
+    def test_totalrate_from_aggregation(self):
+        now = date.today()
+        for i in range(1,4):
+            Agg.objects.create(people=i, amount=4-i, time=now, period='d', detract=0, **self.kw)
+        Agg.objects.agg_to_totalrate()
+        self.assert_equals(6, TotalRate.objects.get_for_object(self.obj))
+
     def test_aggregation_from_aggegates(self):
         now = date.today()
         self.kw['period'] = 'd'
@@ -124,10 +131,6 @@ class TestAggregation(DatabaseTestCase):
         self.assert_equals(2, Agg.objects.count())
         self.assert_equals(expected, [(a.time, a.people, a.amount) for a in Agg.objects.order_by('time')])
 
-
-
-
-
     def test_aggregation_from_ratings_works_for_days(self):
         now = datetime.now()
         Rating.objects.create(amount=1, time=now, **self.kw)
@@ -146,5 +149,4 @@ class TestAggregation(DatabaseTestCase):
                 (now.date(),        2,  3   ),
             ]
         self.assert_equals(expected, [(a.time, a.people, a.amount) for a in Agg.objects.order_by('time')])
-
 
