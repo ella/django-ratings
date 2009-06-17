@@ -46,9 +46,9 @@ class TestTotalRate(DatabaseTestCase):
             )
         self.assert_equals(110, TotalRate.objects.get_for_object(self.obj))
 
-class TestTopObjects(DatabaseTestCase):
+class MultipleRatedObjectsTestCase(DatabaseTestCase):
     def setUp(self):
-        super(TestTopObjects, self).setUp()
+        super(MultipleRatedObjectsTestCase, self).setUp()
         self.ratings = []
         meta_ct = ContentType.objects.get_for_model(ContentType)
         for ct in ContentType.objects.all():
@@ -60,6 +60,7 @@ class TestTopObjects(DatabaseTestCase):
                     )
                 )
 
+class TestTopObjects(MultipleRatedObjectsTestCase):
     def test_only_return_count_objects(self):
         self.assert_equals(1, len(TotalRate.objects.get_top_objects(1)))
 
