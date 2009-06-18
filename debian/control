@@ -1,4 +1,4 @@
-Source: centrum-python-django_ratings
+Source: centrum-python-django-ratings
 Section: python
 Priority: optional
 Maintainer: Honza Kral <honza.kral@gmail.com>
@@ -6,7 +6,7 @@ Uploaders: Ondrej Kohout <ondrej.kohout@centrumholdings.com>, Jakub Vysoky <jaku
 Build-Depends: cdbs (>= 0.4.41), debhelper (>= 5.0.37.2), python-dev, python-support (>= 0.3), python-setuptools, centrum-python-setuptoolsdummy
 Standards-Version: 3.7.2
 
-Package: centrum-python-django_ratings
+Package: centrum-python-django-ratings
 Architecture: all
 Depends: ${python:Depends}, ${misc:Depends}, python-django, python-docutils
 Description: django base library
