@@ -6,44 +6,33 @@ from django.contrib.contenttypes.models import ContentType
 from django_ratings.models import TotalRate, Rating, Agg
 from django_ratings import aggregation
 
-class TestTotalRate(DatabaseTestCase):
+class SimpleRateTestCase(DatabaseTestCase):
     def setUp(self):
-        super(TestTotalRate, self).setUp()
+        super(SimpleRateTestCase, self).setUp()
         self.obj = ContentType.objects.get_for_model(ContentType)
+        self.kw = {
+                'target_ct': ContentType.objects.get_for_model(self.obj),
+                'target_id': self.obj.pk
+        }
 
+class TestTotalRate(SimpleRateTestCase):
     def test_default_rating_of_an_object(self):
         self.assert_equals(0, TotalRate.objects.get_for_object(self.obj))
         
     def test_rating_propagates_to_total_rate(self):
-        Rating.objects.create(
-                target_ct=ContentType.objects.get_for_model(self.obj),
-                target_id=self.obj.pk,
-                amount=10
-            )
+        Rating.objects.create(amount=10, **self.kw)
         self.assert_equals(10, TotalRate.objects.get_for_object(self.obj))
 
     def test_rating_doesnt_propagate_to_total_rate_on_update(self):
-        r = Rating.objects.create(
-                target_ct=ContentType.objects.get_for_model(self.obj),
-                target_id=self.obj.pk,
-                amount=10
-            )
+        r = Rating.objects.create(amount=10, **self.kw)
         r.amount = 100
         r.save()
         self.assert_equals(10, TotalRate.objects.get_for_object(self.obj))
 
         
     def test_rating_propagates_to_total_rate_even_for_existing_totalrate(self):
-        TotalRate.objects.create(
-                target_ct=ContentType.objects.get_for_model(self.obj),
-                target_id=self.obj.pk,
-                amount=100
-            )
-        Rating.objects.create(
-                target_ct=ContentType.objects.get_for_model(self.obj),
-                target_id=self.obj.pk,
-                amount=10
-            )
+        r = Rating.objects.create(amount=10, **self.kw)
+        r = Rating.objects.create(amount=100, **self.kw)
         self.assert_equals(110, TotalRate.objects.get_for_object(self.obj))
 
 class MultipleRatedObjectsTestCase(DatabaseTestCase):
@@ -95,32 +84,16 @@ class TestTopObjects(MultipleRatedObjectsTestCase):
         self.assert_equals(0, len(TotalRate.objects.get_top_objects(10, mods=[TotalRate])))
 
         
-class TestRating(DatabaseTestCase):
-    def setUp(self):
-        super(TestRating, self).setUp()
-        self.obj = ContentType.objects.get_for_model(ContentType)
-
+class TestRating(SimpleRateTestCase):
     def test_default_rating_of_an_object(self):
         self.assert_equals(0, Rating.objects.get_for_object(self.obj))
         
     def test_rating_shows_in_get_for_model(self):
-        Rating.objects.create(
-                target_ct=ContentType.objects.get_for_model(self.obj),
-                target_id=self.obj.pk,
-                amount=10
-            )
+        Rating.objects.create(amount=10, **self.kw)
         self.assert_equals(10, Rating.objects.get_for_object(self.obj))
         
 
-class TestAggregation(DatabaseTestCase):
-    def setUp(self):
-        super(TestAggregation, self).setUp()
-        self.obj = ContentType.objects.get_for_model(ContentType)
-        self.kw = {
-                'target_ct': ContentType.objects.get_for_model(self.obj),
-                'target_id': self.obj.pk
-        }
-
+class TestAggregation(SimpleRateTestCase):
     def test_totalrate_from_aggregation(self):
         now = date.today()
         for i in range(1,4):
