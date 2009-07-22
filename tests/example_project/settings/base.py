@@ -48,9 +48,9 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.redirects',
 
-#    'south',
+    'south',
+    'django_ratings',
 
-    'django.contrib.admin',
 )
 
 VERSION = 1
