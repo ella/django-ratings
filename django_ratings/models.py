@@ -142,9 +142,12 @@ class AggManager(models.Manager):
                     (detract, period, people, amount, time, target_ct_id, target_id)
                  SELECT
                     1, %%s, SUM(people), SUM(amount), %(truncated_date)s, target_ct_id, target_id
-                 FROM %(agg_table)s
-                 WHERE time <= %%s AND detract = 0
-                 GROUP BY target_ct_id, target_id, %(truncated_date)s''' % {
+                 FROM
+                    %(agg_table)s
+                 WHERE
+                    time <= %%s AND detract = 0
+                 GROUP BY
+                    target_ct_id, target_id, %(truncated_date)s''' % {
             'agg_table' : qn(Agg._meta.db_table),
             'truncated_date': date_trunc(time_format, qn('time')),
         }
@@ -165,11 +168,14 @@ class AggManager(models.Manager):
         """
         qn = connection.ops.quote_name
 
-
-        sql = '''INSERT INTO %(tab_tr)s (amount, target_ct_id, target_id)
-                 SELECT SUM(amount), target_ct_id, target_id
-                 FROM %(tab_agg)s
-                 GROUP BY target_ct_id, target_id''' % {
+        sql = '''INSERT INTO %(tab_tr)s
+                    (amount, target_ct_id, target_id)
+                 SELECT
+                    SUM(amount), target_ct_id, target_id
+                 FROM
+                    %(tab_agg)s
+                 GROUP BY
+                    target_ct_id, target_id''' % {
             'tab_agg' : qn(Agg._meta.db_table),
             'tab_tr' : qn(TotalRate._meta.db_table)
         }
