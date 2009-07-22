@@ -1,6 +1,7 @@
 from datetime import date, timedelta, datetime
 
 from django_ratings.models import TotalRate, Rating, Agg
+from django_ratings.aggregation import transfer_data
 
 from helpers import SimpleRateTestCase
 
@@ -50,4 +51,46 @@ class TestAggregation(SimpleRateTestCase):
                 (now.date(),        2,  3   ),
             ]
         self.assert_equals(expected, [(a.time, a.people, a.amount) for a in Agg.objects.order_by('time')])
+
+    def test_transfer_data_aggregates_newer_ratings_daily(self):
+        now = datetime.now()
+        Rating.objects.create(amount=1, time=now, **self.kw)
+        Rating.objects.create(amount=2, time=now, **self.kw)
+
+        yesterday = now - timedelta(days=1)
+        Rating.objects.create(amount=4, time=yesterday, **self.kw)
+        Rating.objects.create(amount=8, time=yesterday, **self.kw)
+
+        transfer_data()
+        expected = [
+                (yesterday.date(),  2,  12  ),
+                (now.date(),        2,  3   ),
+            ]
+
+        self.assert_equals(0, Rating.objects.count())
+        self.assert_equals(2, Agg.objects.count())
+        self.assert_equals(1, TotalRate.objects.count())
+        self.assert_equals(expected, [(a.time, a.people, a.amount) for a in Agg.objects.order_by('time')])
+
+    def test_transfer_data_aggregates_newer_ratings_daily(self):
+        old = date.today() - timedelta(days=70)
+        Rating.objects.create(amount=1, time=old, **self.kw)
+        Rating.objects.create(amount=2, time=old, **self.kw)
+
+        older = old - timedelta(days=40)
+        Rating.objects.create(amount=4, time=older, **self.kw)
+        Rating.objects.create(amount=8, time=older, **self.kw)
+
+        transfer_data()
+        expected = [
+                (older.replace(day=1),  2,  12  ),
+                (old.replace(day=1),    2,  3   ),
+            ]
+
+        self.assert_equals(0, Rating.objects.count())
+        self.assert_equals(2, Agg.objects.count())
+        self.assert_equals(1, TotalRate.objects.count())
+        self.assert_equals(expected, [(a.time, a.people, a.amount) for a in Agg.objects.order_by('time')])
+
+
 

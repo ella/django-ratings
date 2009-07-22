@@ -9,13 +9,14 @@ from django_ratings.models import Rating, Agg, TotalRate
 
 logger = logging.getLogger('django_ratings')
 
-DELTA_TIME_YEAR = 365*24*60*60
-DELTA_TIME_MONTH = 30*24*60*60
-DELTA_TIME_WEEK = 7*24*60*60
-DELTA_TIME_DAY = 24*60*60
+# aggregate ratings older than 2 years by year
+DELTA_TIME_YEAR = 2*365*24*60*60
+# ratings older than 2 months by month
+DELTA_TIME_MONTH = 2*30*24*60*60
+# rest of the ratings (last 2 months) aggregate daily
+DELTA_TIME_DAY = -24*60*60
 
-TIMES_ALL = {DELTA_TIME_YEAR : '%Y', DELTA_TIME_MONTH : '%m.%Y', DELTA_TIME_WEEK : '%u.%Y', DELTA_TIME_DAY : '%d.%m.%Y'}
-PERIODS = {DELTA_TIME_YEAR : "'y'", DELTA_TIME_MONTH : "'m'", DELTA_TIME_WEEK : "'w'", DELTA_TIME_DAY : "'d'"}
+TIMES_ALL = {DELTA_TIME_YEAR : 'year', DELTA_TIME_MONTH : 'month', DELTA_TIME_DAY : 'day'}
 
 def transfer_agg_to_totalrate():
     """
@@ -37,8 +38,7 @@ def transfer_agg_to_agg():
     for t in TIMES_ALL:
         TIME_DELTA = t
         time_agg = timenow - timedelta(seconds=TIME_DELTA)
-        Agg.objects.copy_agg_to_agg(time_agg, TIMES_ALL[t], PERIODS[t])
-        Agg.objects.filter(time__lte=time_agg, detract=0).delete()
+        Agg.objects.move_agg_to_agg(time_agg, TIMES_ALL[t])
     Agg.objects.agg_assume()
     logger.info("transfer_agg_to_agg END")
 
@@ -49,19 +49,11 @@ def transfer_data():
     """
     logger.info("transfer_data BEGIN")
     timenow = datetime.now()
-    for t in TIMES_ALL:
+    for t in sorted(TIMES_ALL.keys(), reverse=True):
         TIME_DELTA = t
         time_agg = timenow - timedelta(seconds=TIME_DELTA)
-        Rating.objects.copy_rate_to_agg(time_agg, TIMES_ALL[t], PERIODS[t])
-        Rating.objects.filter(time__lte=time_agg).delete()
+        Rating.objects.move_rate_to_agg(time_agg, TIMES_ALL[t])
     transfer_agg_to_agg()
     transfer_agg_to_totalrate()
     logger.info("transfer_data END")
-    return True
-
-
-
-if __name__ == "__main__":
-    transfer_data()
-
 
