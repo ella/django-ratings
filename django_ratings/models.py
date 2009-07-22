@@ -25,69 +25,6 @@ PERIOD_CHOICES = (
 )
 
 
-MODEL_WEIGHT_CACHE = {}
-class ModelWeightManager(models.Manager):
-    """
-    Manager class that handles one additional method - getweight(model), which will return weight for a given model
-    """
-    def get_weight(self, model):
-        """
-        Returns the weight for the given model.
-
-        Params:
-            model: model class or instance to work with
-        """
-        opts = model._meta
-        key = (opts.app_label, opts.object_name.lower())
-
-        try:
-            weight = MODEL_WEIGHT_CACHE[key]
-        except KeyError:
-            try:
-                mw = self.get(content_type=ContentType.objects.get_for_model(model))
-                weight = mw.weight
-            except ModelWeight.DoesNotExist:
-                weight = DEFAULT_MODEL_WEIGHT
-
-            MODEL_WEIGHT_CACHE[key] = weight
-
-        return weight
-
-    def clear_cache(self):
-        """
-        Clear out the model-weight cache. This needs to happen during database
-        flushes to prevent caching of "stale" model weights IDs (see
-        django_ratings.management.create_model_weights and ModelWeight.save() for where
-        this gets called).
-
-        Taken from django.contrib.contenttypes.models, thanks.
-        """
-        global MODEL_WEIGHT_CACHE
-        MODEL_WEIGHT_CACHE = {}
-
-
-class ModelWeight(models.Model):
-    """
-    Importance of each Model when it comes to computing owner's Karma.
-    """
-    content_type = models.OneToOneField(ContentType)
-    weight = models.IntegerField(_('Weight'), default=DEFAULT_MODEL_WEIGHT)
-    owner_field = models.CharField(_('Owner field'), max_length=30, help_text=_('Name of the field on target model that identifies the owner of the object'))
-
-    objects = ModelWeightManager()
-
-    def save(self, **kwargs):
-        """
-        Clear the cache and do the save()
-        """
-        ModelWeight.objects.clear_cache()
-        return super(ModelWeight, self).save(**kwargs)
-
-    class Meta:
-        verbose_name = _('Model weight')
-        verbose_name_plural = _('Model weights')
-        ordering = ('-weight',)
-
 class TotalRateManager(models.Manager):
 
     def get_normalized_rating(self, obj, top, step=None):
