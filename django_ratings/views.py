@@ -73,9 +73,6 @@ def do_rate(request, ct, target, plusminus):
     kwa = {'amount' : ANONYMOUS_KARMA}
     if request.user.is_authenticated():
         kwa['user'] = request.user
-        if getattr(settings, 'AUTH_PROFILE_MODULE', False):
-            profile = request.user.get_profile()
-            kwa['amount'] = getattr(profile, 'karma', INITIAL_USER_KARMA)
 
     kwa['amount'] *= plusminus
 
