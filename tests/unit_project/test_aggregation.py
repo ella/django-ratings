@@ -23,7 +23,7 @@ class TestAggregation(SimpleRateTestCase):
         Agg.objects.create(people=2, amount=4, time=before, **self.kw)
         Agg.objects.create(people=1, amount=8, time=before, **self.kw)
 
-        Agg.objects.move_agg_to_agg(now, 'month', 'm')
+        Agg.objects.move_agg_to_agg(now, 'month')
         expected = [
                 (before.replace(day=1), 3,  12  ),
                 (now.replace(day=1),    12, 3   ),
@@ -41,7 +41,7 @@ class TestAggregation(SimpleRateTestCase):
         Rating.objects.create(amount=4, time=yesterday, **self.kw)
         Rating.objects.create(amount=8, time=yesterday, **self.kw)
 
-        Rating.objects.move_rate_to_agg(now, 'day', 'd')
+        Rating.objects.move_rate_to_agg(now, 'day')
 
         self.assert_equals(0, Rating.objects.count())
         self.assert_equals(2, Agg.objects.count())

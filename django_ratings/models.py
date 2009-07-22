@@ -124,15 +124,13 @@ class TotalRate(models.Model):
 
 class AggManager(models.Manager):
 
-    def move_agg_to_agg(self, time_limit, time_format, time_period):
+    def move_agg_to_agg(self, time_limit, time_format):
         """
         Coppy aggregated Agg data to table Agg
 
         time_limit: limit for time of transfering data
 
-        time_format: format for destiny DATE_FORMAT
-
-        time_period: is a period of aggregation data
+        time_format: format for date_trunc
         """
         qn = connection.ops.quote_name
         date_trunc = connection.ops.date_trunc_sql
@@ -152,7 +150,7 @@ class AggManager(models.Manager):
         }
 
         cursor = connection.cursor()
-        cursor.execute(sql, (time_period, time_limit,))
+        cursor.execute(sql, (time_format[0], time_limit,))
         self.filter(time__lte=time_limit, detract=0).delete()
 
     def agg_assume(self):
@@ -223,15 +221,13 @@ class RatingManager(models.Manager):
             return 0
         return aggs
 
-    def move_rate_to_agg(self, time_limit, time_format, time_period):
+    def move_rate_to_agg(self, time_limit, time_format):
         """
         Coppy aggregated Rating to table Agg
 
         time_limit: limit for time of transfering data
 
-        time_format: format for destiny DATE_FORMAT
-
-        time_period: is a period of aggregation data
+        time_format: format for date_trunc
         """
         qn = connection.ops.quote_name
         date_trunc = connection.ops.date_trunc_sql
@@ -249,7 +245,7 @@ class RatingManager(models.Manager):
         }
 
         cursor = connection.cursor()
-        cursor.execute(sql, (time_period, time_limit,))
+        cursor.execute(sql, (time_format[0], time_limit,))
         self.filter(time__lte=time_limit).delete()
 
 
