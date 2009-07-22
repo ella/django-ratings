@@ -8,9 +8,9 @@ from django_ratings import karma
 class TestKarmaSources(DatabaseTestCase):
     def setUp(self):
         super(TestKarmaSources, self).setUp()
-        self.user, created = User.objects.get_or_create(
+        self.user = User.objects.create(
                 username='some_username',
-                defaults={'password': UNUSABLE_PASSWORD}
+                password=UNUSABLE_PASSWORD
             )
 
     def tearDown(self):
