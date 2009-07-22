@@ -22,9 +22,24 @@ class TestKarmaSources(DatabaseTestCase):
 
     def test_returns_owner_for_registered_model(self):
         karma.sources.register(User, lambda u:u)
-        self.assert_equals(self.user, karma.sources.get_owner(self.user))
+        self.assert_equals((self.user, 1), karma.sources.get_owner(self.user))
 
-    def test_raises_error_on_double_registration(self):
+    def test_raises_error_on_double_registration_with_different_weights(self):
+        f = lambda u:u
+        karma.sources.register(User, f, 100)
+        self.assert_raises(ImproperlyConfigured, karma.sources.register, User, f, 10)
+
+    def test_raises_error_on_double_registration_with_different_getters(self):
         karma.sources.register(User, lambda u:u)
         self.assert_raises(ImproperlyConfigured, karma.sources.register, User, lambda u: u.pk)
+
+    def test_weight_gets_matched_correctly(self):
+        karma.sources.register(User, lambda u:u, 100)
+        self.assert_equals((self.user, 100), karma.sources.get_owner(self.user))
+
+    def test_double_registration_works_for_same_values(self):
+        f = lambda u:u
+        karma.sources.register(User, f, 100)
+        karma.sources.register(User, f, 100)
+        self.assert_equals((self.user, 100), karma.sources.get_owner(self.user))
 
