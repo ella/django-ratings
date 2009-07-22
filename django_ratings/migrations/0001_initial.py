@@ -18,7 +18,7 @@ class Migration:
             ('period', models.CharField(_('Period'), max_length="1")),
             ('detract', models.IntegerField(_('Detract'), default=0, max_length=1)),
         ))
-        db.send_create_signal('ratings', ['Agg'])
+        db.send_create_signal('django_ratings', ['Agg'])
         
         # Adding model 'ModelWeight'
         db.create_table('ratings_modelweight', (
@@ -27,7 +27,7 @@ class Migration:
             ('weight', models.IntegerField(_('Weight'), default=1)),
             ('owner_field', models.CharField(_('Owner field'), max_length=30)),
         ))
-        db.send_create_signal('ratings', ['ModelWeight'])
+        db.send_create_signal('django_ratings', ['ModelWeight'])
         
         # Adding model 'TotalRate'
         db.create_table('ratings_totalrate', (
@@ -36,7 +36,7 @@ class Migration:
             ('target_id', models.PositiveIntegerField(_('Object ID'), db_index=True)),
             ('amount', models.DecimalField(_('Amount'), max_digits=10, decimal_places=2)),
         ))
-        db.send_create_signal('ratings', ['TotalRate'])
+        db.send_create_signal('django_ratings', ['TotalRate'])
         
         # Adding model 'Rating'
         db.create_table('ratings_rating', (
@@ -48,7 +48,7 @@ class Migration:
             ('amount', models.DecimalField(_('Amount'), max_digits=10, decimal_places=2)),
             ('ip_address', models.CharField(_('IP Address'), max_length="15", blank=True)),
         ))
-        db.send_create_signal('ratings', ['Rating'])
+        db.send_create_signal('django_ratings', ['Rating'])
         
     
     
@@ -69,7 +69,7 @@ class Migration:
     
     
     models = {
-        'ratings.agg': {
+        'django_ratings.agg': {
             'Meta': {'ordering': "('-time',)"},
             'amount': ('models.DecimalField', ["_('Amount')"], {'max_digits': '10', 'decimal_places': '2'}),
             'detract': ('models.IntegerField', ["_('Detract')"], {'default': '0', 'max_length': '1'}),
@@ -80,7 +80,7 @@ class Migration:
             'target_id': ('models.PositiveIntegerField', ["_('Object ID')"], {'db_index': 'True'}),
             'time': ('models.DateField', ["_('Time')"], {})
         },
-        'ratings.rating': {
+        'django_ratings.rating': {
             'Meta': {'ordering': "('-time',)"},
             'amount': ('models.DecimalField', ["_('Amount')"], {'max_digits': '10', 'decimal_places': '2'}),
             'id': ('models.AutoField', [], {'primary_key': 'True'}),
@@ -94,7 +94,7 @@ class Migration:
             '_stub': True,
             'id': ('models.AutoField', [], {'primary_key': 'True'})
         },
-        'ratings.totalrate': {
+        'django_ratings.totalrate': {
             'amount': ('models.DecimalField', ["_('Amount')"], {'max_digits': '10', 'decimal_places': '2'}),
             'id': ('models.AutoField', [], {'primary_key': 'True'}),
             'target_ct': ('models.ForeignKey', ["orm['contenttypes.ContentType']"], {'db_index': 'True'}),
@@ -105,7 +105,7 @@ class Migration:
             '_stub': True,
             'id': ('models.AutoField', [], {'primary_key': 'True'})
         },
-        'ratings.modelweight': {
+        'django_ratings.modelweight': {
             'Meta': {'ordering': "('-weight',)"},
             'content_type': ('models.OneToOneField', ["orm['contenttypes.ContentType']"], {}),
             'id': ('models.AutoField', [], {'primary_key': 'True'}),
@@ -114,4 +114,4 @@ class Migration:
         }
     }
     
-    complete_apps = ['ratings']
+    complete_apps = ['django_ratings']
