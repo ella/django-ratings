@@ -24,6 +24,14 @@ PERIOD_CHOICES = (
 )
 
 
+class UserKarma(models.Model):
+    user = models.ForeignKey(User, primary_key=True)
+    karma = models.DecimalField(_('Karma'), max_digits=10, decimal_places=2)
+
+    class Meta:
+        verbose_name = _("User's karma")
+        verbose_name_plural = _("Users' karmas")
+
 class TotalRateManager(models.Manager):
 
     def get_normalized_rating(self, obj, top, step=None):
