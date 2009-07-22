@@ -20,7 +20,6 @@ RATINGS_MAX_COOKIE_AGE = getattr(settings, 'RATINGS_MAX_COOKIE_AGE', 3600)
 PERIOD_CHOICES = (
     ('d', 'day'),
     ('m', 'month'),
-    ('w', 'week'),
     ('y', 'year'),
 )
 
