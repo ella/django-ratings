@@ -11,7 +11,6 @@ from django.utils.translation import ugettext_lazy as _
 # ratings - specific settings
 ANONYMOUS_KARMA = getattr(settings, 'ANONYMOUS_KARMA', 1)
 INITIAL_USER_KARMA = getattr(settings, 'ANONYMOUS_KARMA', 4)
-DEFAULT_MODEL_WEIGHT = getattr(settings, 'DEFAULT_MODEL_WEIGHT', 1)
 MINIMAL_ANONYMOUS_IP_DELAY = getattr(settings, 'MINIMAL_ANONYMOUS_IP_DELAY', 1800)
 RATINGS_COOKIE_NAME = getattr(settings, 'RATINGS_COOKIE_NAME', 'ratings_voted')
 RATINGS_MAX_COOKIE_LENGTH = getattr(settings, 'RATINGS_MAX_COOKIE_LENGTH', 20)
