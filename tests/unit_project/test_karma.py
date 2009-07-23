@@ -1,6 +1,7 @@
 from djangosanetesting import DatabaseTestCase
 
 from django.contrib.auth.models import User, UNUSABLE_PASSWORD
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured
 
 from django_ratings import karma
@@ -42,4 +43,18 @@ class TestKarmaSources(DatabaseTestCase):
         karma.sources.register(User, f, 100)
         karma.sources.register(User, f, 100)
         self.assert_equals((self.user, 100), karma.sources.get_owner(self.user))
+
+    def test_get_contenttypes_is_empty_on_empty_sources(self):
+        self.assert_equals([], karma.sources.registered_content_types())
+
+    def test_get_contenttypes_returns_registered_models(self):
+        karma.sources.register(User, lambda u:u)
+        karma.sources.register(ContentType, lambda u:u)
+        self.assert_equals(
+                sorted([
+                        ContentType.objects.get_for_model(User),
+                        ContentType.objects.get_for_model(ContentType)
+                        ]),
+                sorted(karma.sources.registered_content_types())
+            )
 

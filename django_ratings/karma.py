@@ -1,4 +1,5 @@
 from django.core.exceptions import ImproperlyConfigured
+from django.contrib.contenttypes.models import ContentType
 
 class KarmaSources(object):
     """
@@ -27,6 +28,10 @@ class KarmaSources(object):
             return owner_getter(instance), weight
 
         return None
+
+    def registered_content_types(self):
+        return map(ContentType.objects.get_for_model, self._registry.keys())
+
 
 # global registry of karma sources
 sources = KarmaSources()
