@@ -8,6 +8,8 @@ from django.contrib.contenttypes import generic
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
+from django_ratings import karma
+
 # ratings - specific settings
 ANONYMOUS_KARMA = getattr(settings, 'ANONYMOUS_KARMA', 1)
 INITIAL_USER_KARMA = getattr(settings, 'ANONYMOUS_KARMA', 4)
@@ -22,10 +24,21 @@ PERIOD_CHOICES = (
     ('y', 'year'),
 )
 
+class UserKarmaManager(models.Manager):
+    def total_rate_to_karma(self):
+        self.all().update(karma=0)
+        for r in TotalRate.objects.filter(target_ct__in=karma.sources.registered_content_types()):
+            owner, weight = karma.sources.get_owner(r.target)
+            amount = r.amount * weight
+            updated = self.filter(user=owner).update(karma=models.F('karma') + amount)
+            if updated == 0:
+                self.create(user=owner, karma=amount)
 
 class UserKarma(models.Model):
     user = models.ForeignKey(User, primary_key=True)
     karma = models.DecimalField(_('Karma'), max_digits=10, decimal_places=2)
+
+    objects = UserKarmaManager()
 
     class Meta:
         verbose_name = _("User's karma")
